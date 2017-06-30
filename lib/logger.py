@@ -15,8 +15,9 @@ class Logger(object):
     Change the interval between tests in minutes
     """
     def set_interval(self, interval):
-        hz = 1/(interval*60)    # convert interval to Hz
-        self.beat.set_rate(hz)
+        interval = max(1, interval)  # make sure interval is > 1
+        hz = 1/float(interval*60)    # convert interval to Hz
+        beat.set_rate(hz)
 
     def do_speedtest(self):
         s = speedtest.Speedtest()

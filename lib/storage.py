@@ -21,13 +21,14 @@ class Storage(object):
     def setup_db(self):
         cols = ""
         for cname, dtype in self.fields.iteritems():
-            cols += '{cn} {dt}, '.format(cn=cname,dt=dtype)
+            if cols != "":
+                cols += ","
+            cols += '{cn} {dt}'.format(cn=cname,dt=dtype)
 
-        print cols
+        sql = "CREATE TABLE IF NOT EXISTS {tn} ({cs})"\
+                .format(tn=self.table_name,cs=cols)
 
-        self.c.execute('CREATE TABLE IF NOT EXISTS {tn} ({cs})'\
-                .format(tn=self.table_name,cs='1st_column INTEGER PRIMARY KEY'))
-
+        self.c.execute(sql)
         self.conn.commit()
 
 
@@ -36,14 +37,19 @@ class Storage(object):
             ping = result_dict['ping']
             down = result_dict['download']
             up = result_dict['upload']
-            sid = results_dict['server']['id']
+            server_id = result_dict['server']['id']
 
-            self.c.execute("INSERT INTO {tn} VALUES (DATE('now'),{p},{d},{u},{sid})"\
+            logging.info("Speedtest result: D{:.2f}MB U{:.2f}MB P{:.2f}ms"\
+                    .format(down/1024/1024, up/1024/1024, ping))
+
+            self.c.execute("INSERT INTO {tn} VALUES (CURRENT_TIMESTAMP,{p},{d},{u},{sid})"\
                 .format(tn=self.table_name,p=ping,d=down,u=up,sid=server_id))
             self.conn.commit()
 
         except KeyError:
             logging.error('Results are missing data')
+        except sqlite3.IntegrityError:
+            logging.error('Date time already exists, not adding data')
 
 
 #    def get_tests(self, end_date, start_date=today):
