@@ -3,6 +3,7 @@ import cronus.beat as beat
 import time
 import datetime
 import speedtest
+import sys
 
 class Logger(object):
 
@@ -20,12 +21,17 @@ class Logger(object):
         beat.set_rate(hz)
 
     def do_speedtest(self):
-        s = speedtest.Speedtest()
-        s.get_best_server()
-        s.download()
-        s.upload()
+        try:
+            s = speedtest.Speedtest()
+        except:
+            e = sys.exc_info()[0]
+            logging.error("Speedtest error: %s" % e)
+        else:
+            s.get_best_server()
+            s.download()
+            s.upload()
 
-        self.storage.add_test(s.results.dict())
+            self.storage.add_test(s.results.dict())
 
     def run(self):
         while beat.true():
